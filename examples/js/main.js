@@ -1,32 +1,35 @@
 //Some general Three.js components
 var renderer, scene, camera, controls;
 
-var depthkit;
+//var depthkit;
 //Depthkit character
-var character;
 var rotationStep = Math.PI / 9.0;
 var positionStep = 0.05;
 
 const appState = {
-  character: "autumn",
+  characters: [],
+  curCharacter: null,
+  dephkits: [],
+  curDephkit: null,
+  curIndex: null,
 };
 
 const config = {
   paths: {
     assets: "../../assets",
   },
-  characters: {
-    autumn: {
+  characters: [
+    {
       name: "autumn",
       rotation: null,
-      position: [0, 0.95, 0],
+      position: [2, 0.95, 0],
     },
-    john: {
+    {
       name: "john",
       rotation: [Math.PI - 0.25, 0, Math.PI / -2.0],
       position: [-0.25, 0.92, 0],
     },
-  },
+  ],
 };
 
 init();
@@ -61,46 +64,56 @@ function init() {
   var gridHelper = new THREE.GridHelper(50, 50);
   scene.add(gridHelper);
 
-  const charInfo = config.characters[appState.character];
+  config.characters.forEach((charInfo, index) => {
+    const depthkit = new Depthkit();
+    //if (index === 0) {
+    console.log(charInfo.name);
+    depthkit.load(
+      // "../assets/John/John.txt",
+      // "../assets/John/John.mp4",
+      `${config.paths.assets}/${charInfo.name}/${charInfo.name}.txt`,
+      `${config.paths.assets}/${charInfo.name}/${charInfo.name}.mp4`,
+      (dkCharacter) => {
+        const character = dkCharacter;
 
-  depthkit = new Depthkit();
-  depthkit.load(
-    // "../assets/John/John.txt",
-    // "../assets/John/John.mp4",
-    `${config.paths.assets}/${charInfo.name}/${charInfo.name}.txt`,
-    `${config.paths.assets}/${charInfo.name}/${charInfo.name}.mp4`,
-    (dkCharacter) => {
-      character = dkCharacter;
+        //Position and rotation adjustments
+        //dkCharacter.rotation.set(Math.PI - 0.25, 0, Math.PI / -2.0);
+        // dkCharacter.rotation.y = Math.PI;
+        //dkCharacter.position.set( -0.25, 0.92, 0 );
+        if (charInfo.rotation) {
+          dkCharacter.rotation.set(
+            charInfo.rotation[0],
+            charInfo.rotation[1],
+            charInfo.rotation[2]
+          );
+        }
 
-      //Position and rotation adjustments
-      //dkCharacter.rotation.set(Math.PI - 0.25, 0, Math.PI / -2.0);
-      // dkCharacter.rotation.y = Math.PI;
-      //dkCharacter.position.set( -0.25, 0.92, 0 );
-      if (charInfo.rotation) {
-        dkCharacter.rotation.set(
-          charInfo.rotation[0],
-          charInfo.rotation[1],
-          charInfo.rotation[2]
-        );
+        if (charInfo.position) {
+          dkCharacter.position.set(
+            charInfo.position[0],
+            charInfo.position[1],
+            charInfo.position[2]
+          );
+        }
+
+        //Add the character to the scene
+        scene.add(dkCharacter);
+
+        console.log("add character", charInfo.name);
+        appState.characters.push(dkCharacter);
+        appState.curCharacter = dkCharacter;
+        appState.curIndex = index;
       }
+    );
+    // Depthkit video playback control
+    depthkit.video.muted = "muted"; // Necessary for auto-play in chrome now
+    depthkit.setLoop(true);
+    depthkit.play();
 
-      if (charInfo.position) {
-        dkCharacter.position.set(
-          charInfo.position[0],
-          charInfo.position[1],
-          charInfo.position[2]
-        );
-      }
-
-      // Depthkit video playback control
-      depthkit.video.muted = "muted"; // Necessary for auto-play in chrome now
-      depthkit.setLoop(true);
-      depthkit.play();
-
-      //Add the character to the scene
-      scene.add(character);
-    }
-  );
+    appState.dephkits.push(depthkit);
+    appState.curDephkit = depthkit;
+    //}
+  });
 
   window.addEventListener("resize", onWindowResize, false);
   window.addEventListener("keydown", onKeyDown, false);
@@ -121,6 +134,9 @@ function onWindowResize() {
 }
 
 function onKeyDown(event) {
+  const character = appState.curCharacter;
+  const dephkit = appState.curDephkit;
+  console.log(appState.characters);
   switch (event.keyCode) {
     case 49: // key '1'
       depthkit.setMeshScalar(1);
@@ -168,17 +184,25 @@ function onKeyDown(event) {
     case 221: // key ']'
       character.position.z += positionStep;
       break;
+    case 67: // key 'c'
+      if (appState.curIndex < appState.characters.length - 1) {
+        appState.curIndex++;
+      } else {
+        appState.curIndex = 0;
+      }
+      appState.curCharacter = appState.characters[appState.curIndex];
+      appState.curDephkit = appState.dephkits[appState.curIndex];
 
     default:
       scene.updateMatrixWorld();
 
       var v = new THREE.Vector3();
-      v.setFromMatrixPosition(character.matrixWorld);
+      v.setFromMatrixPosition(appState.curCharacter.matrixWorld);
       console.log(v);
       break;
   }
 
-  if (event.keyCode && character) {
-    console.log(character.position, character.rotation);
+  if (event.keyCode && appState.curCharacter) {
+    console.log(appState.curCharacter.position, appState.curCharacter.rotation);
   }
 }
