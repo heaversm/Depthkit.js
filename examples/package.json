@@ -1,0 +1,19 @@
+{
+  "name": "dephkit-example",
+  "version": "1.0.0",
+  "description": "Sample depthkit scene w env",
+  "main": "js/main.js",
+  "directories": {
+    "lib": "lib",
+    "js": "js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "depthkit": "^1.0.0",
+    "three": "^0.117.1"
+  }
+}

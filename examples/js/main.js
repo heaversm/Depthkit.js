@@ -1,3 +1,7 @@
+//import * as THREE from "three";
+//import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+//import Depthkit from "depthkit";
+
 //Some general Three.js components
 var renderer, scene, camera, controls;
 
@@ -16,7 +20,7 @@ const appState = {
 
 const config = {
   paths: {
-    assets: "../../assets",
+    assets: "../assets",
   },
   characters: [
     {
@@ -35,18 +39,23 @@ const config = {
 init();
 
 function addHDR() {
-  var pmremGenerator = new THREE.PMREMGenerator(renderer);
-  pmremGenerator.compileEquirectangularShader();
-  new THREE.RGBELoader()
-    //.setDataType(THREE.UnsignedByteType) // alt: FloatType, HalfFloatType
-    //.setPath(sceneConfig.texturePath)
-    .load("../../assets/hdr/royal_esplanade_1k.hdr", function (texture) {
-      console.log(texture);
-      var envMap = pmremGenerator.fromEquirectangular(texture).texture;
-      scene.environment = envMap;
-      texture.dispose();
-      pmremGenerator.dispose();
-    });
+  var path = "../assets/hdr/castle/";
+  var format = ".jpg";
+  var urls = [
+    path + "px" + format,
+    path + "nx" + format,
+    path + "py" + format,
+    path + "ny" + format,
+    path + "pz" + format,
+    path + "nz" + format,
+  ];
+  var reflectionCube = new THREE.CubeTextureLoader().load(urls);
+  reflectionCube.format = THREE.RGBFormat;
+
+  var refractionCube = new THREE.CubeTextureLoader().load(urls);
+  refractionCube.mapping = THREE.CubeRefractionMapping;
+  refractionCube.format = THREE.RGBFormat;
+  scene.background = reflectionCube;
 }
 
 function init() {
@@ -71,9 +80,8 @@ function init() {
     20
   );
   camera.position.set(0, 2, 3);
-
   // Setup controls
-  controls = new THREE.OrbitControls(camera);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 0.75, 0);
   camera.lookAt(controls.target);
 
@@ -155,7 +163,6 @@ function onWindowResize() {
 function onKeyDown(event) {
   const character = appState.curCharacter;
   const dephkit = appState.curDephkit;
-  console.log(appState.characters);
   switch (event.keyCode) {
     case 49: // key '1'
       depthkit.setMeshScalar(1);
@@ -217,11 +224,11 @@ function onKeyDown(event) {
 
       var v = new THREE.Vector3();
       v.setFromMatrixPosition(appState.curCharacter.matrixWorld);
-      console.log(v);
+      //console.log(v);
       break;
   }
 
   if (event.keyCode && appState.curCharacter) {
-    console.log(appState.curCharacter.position, appState.curCharacter.rotation);
+    //console.log(appState.curCharacter.position, appState.curCharacter.rotation);
   }
 }
