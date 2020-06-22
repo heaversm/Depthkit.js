@@ -34,16 +34,33 @@ const config = {
 
 init();
 
+function addHDR() {
+  var pmremGenerator = new THREE.PMREMGenerator(renderer);
+  pmremGenerator.compileEquirectangularShader();
+  new THREE.RGBELoader()
+    //.setDataType(THREE.UnsignedByteType) // alt: FloatType, HalfFloatType
+    //.setPath(sceneConfig.texturePath)
+    .load("../../assets/hdr/royal_esplanade_1k.hdr", function (texture) {
+      console.log(texture);
+      var envMap = pmremGenerator.fromEquirectangular(texture).texture;
+      scene.environment = envMap;
+      texture.dispose();
+      pmremGenerator.dispose();
+    });
+}
+
 function init() {
   //Setup renderer
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({
+    alpha: true, //for transparent background
+  });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
   // Setup scene
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x282828);
+  //scene.background = new THREE.Color(0x282828); //for solid color bg
   scene.fog = new THREE.Fog(0x282828, 0.0, 10.0);
 
   // Setup camera
@@ -63,6 +80,8 @@ function init() {
   // A grid helper as a floor reference
   var gridHelper = new THREE.GridHelper(50, 50);
   scene.add(gridHelper);
+
+  addHDR();
 
   config.characters.forEach((charInfo, index) => {
     const depthkit = new Depthkit();
